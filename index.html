@@ -3,18 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
-    <title>Paçoca: A Jornada do Docinho (V7.0 - Mobile & OST Update)</title>
+    <title>Paçoca: A Jornada do Docinho (V7.1 - Responsive Fix)</title>
     
     <!-- 
-        PROJETO: Paçoca: A Jornada do Docinho (V7.0 - Mobile & OST Update)
+        PROJETO: Paçoca: A Jornada do Docinho (V7.1 - Responsive Fix)
         CRIADO POR: Gabriel Leandro
         MELHORIAS IMPLEMENTADAS NESTA VERSÃO:
-        - CONTROLES MOBILE: Adicionados controles de toque (D-Pad e botão de ação) que aparecem em dispositivos móveis.
-        - TELA DE LOADING: Implementada uma tela de loading inicial com créditos e pré-carregamento de assets.
-        - MÚLTIPLAS OSTs: Sistema de áudio aprimorado com músicas dinâmicas para o menu, gameplay e perseguição.
-        - MENU MELHORADO: Menu inicial com tela de "Opções" para seleção de modo de controle (Teclado/Touch).
-        - OTIMIZAÇÃO: Implementado cache de sprites para melhor performance.
-        - REORGANIZAÇÃO GERAL DO CÓDIGO.
+        - CORREÇÃO DE RESPONSIVIDADE: Implementada uma solução completa para o layout em dispositivos móveis.
+        - O jogo agora se encaixa perfeitamente na tela, mantendo a proporção 16:9 em qualquer orientação (vertical/horizontal).
+        - Todos os elementos da interface (HUD, Menus, Controles de Toque) são redimensionados e reposicionados corretamente.
+        - Controles de toque agora usam unidades 'vmin' para um dimensionamento mais consistente entre orientações.
     -->
 
     <style>
@@ -31,41 +29,49 @@
             --color-success: #2ecc71;
             --font-pixel: 'PixelFont', monospace;
         }
+        * { box-sizing: border-box; }
         body, html {
             margin: 0; padding: 0;
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-            height: 100vh;
+            width: 100%; height: 100%;
             overflow: hidden;
             background-color: var(--color-bg);
             color: var(--color-text);
             font-family: var(--font-pixel);
-            image-rendering: pixelated; /* Mantém o estilo pixel art */
-        }
-        #game-container {
-            position: relative;
-            width: 100%;
-            max-width: 1920px;
             display: flex;
             justify-content: center;
             align-items: center;
         }
+        #game-container {
+            position: relative;
+            /* width e height serão definidos via JS para corresponder ao canvas */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
         canvas#gameCanvas {
             border: 5px solid #4a2d1f;
             box-shadow: 0 0 20px rgba(0,0,0,0.5);
-            width: 100%; height: auto;
-            max-width: 100vw;
-            max-height: calc(100vh - 10px);
-            aspect-ratio: 16 / 9;
+            /* Faz o canvas preencher o contêiner, mas respeitando a proporção */
+            width: 100%; 
+            height: 100%;
             object-fit: contain;
+            aspect-ratio: 16 / 9;
             background: #000;
         }
-        .hud {
-            position: absolute; top: 10px; left: 10px; right: 10px;
-            display: flex; justify-content: space-between; align-items: center;
-            font-size: clamp(14px, 2.5vw, 20px);
-            text-shadow: 2px 2px 2px #000;
+        .hud, .screen-overlay, #mobile-controls {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             pointer-events: none;
-            text-transform: uppercase;
+        }
+        .hud {
+            display: flex; justify-content: space-between; align-items: flex-start;
+            padding: 10px;
+            font-size: clamp(12px, 2vmin, 20px);
+            text-shadow: 2px 2px 2px #000;
             z-index: 5;
             flex-wrap: wrap; gap: 5px;
         }
@@ -79,20 +85,20 @@
         #combo.active { transform: scale(1.2); }
 
         .screen-overlay {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.75);
             display: flex; flex-direction: column; justify-content: center; align-items: center;
             text-align: center; z-index: 10;
-            opacity: 0; transition: opacity .3s ease-in-out; pointer-events: none;
+            opacity: 0; transition: opacity .3s ease-in-out;
+            padding: 2%;
         }
         .screen-overlay.visible { opacity: 1; pointer-events: auto; }
-        .screen-overlay h1 { font-size: clamp(32px, 8vw, 48px); color: var(--color-accent); text-shadow: 3px 3px 0 #000; margin-bottom: 20px; }
-        .screen-overlay p { font-size: clamp(16px, 4vw, 24px); max-width: 600px; line-height: 1.5; margin-bottom: 30px; }
+        .screen-overlay h1 { font-size: clamp(28px, 8vmin, 48px); color: var(--color-accent); text-shadow: 3px 3px 0 #000; margin-bottom: 2vh; }
+        .screen-overlay p { font-size: clamp(14px, 4vmin, 24px); max-width: 90%; line-height: 1.5; margin-bottom: 3vh; }
         
         .pixel-button {
             font-family: var(--font-pixel);
-            font-size: clamp(20px, 5vw, 28px);
-            padding: 15px 30px;
+            font-size: clamp(16px, 4.5vmin, 28px);
+            padding: 1.5vh 3vh;
             background: var(--color-success); color: var(--color-text);
             border: 3px solid #FFF; border-radius: 8px; cursor: pointer;
             text-transform: uppercase;
@@ -108,102 +114,80 @@
         #gameOverScreen button:hover { background: #f86756; box-shadow: 0 7px 0 #8b2c21; }
         #gameOverScreen button:active { box-shadow: 0 3px 0 #8b2c21; }
         
-        #startScreen #logo-container { font-size: clamp(60px, 15vw, 96px); margin-bottom: 30px; color: var(--color-accent); text-shadow: 6px 6px 0 #000; }
+        #startScreen #logo-container { font-size: clamp(50px, 15vmin, 96px); margin-bottom: 30px; color: var(--color-accent); text-shadow: 6px 6px 0 #000; }
         #startScreen #logo-cursor { animation: blink .8s step-end infinite; }
         @keyframes blink { from, to { opacity: 1; } 50% { opacity: 0; } }
-        .buttons-group { display: flex; flex-direction: column; gap: 10px; }
+        .buttons-group { display: flex; flex-direction: column; gap: 10px; align-items: center; }
 
-        /* Estilos da Lojinha */
         #shopScreen .upgrades-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; margin-top: 20px; }
-        #shopScreen .upgrade-card { background: rgba(255,255,255,0.1); padding: 15px; border: 2px solid var(--color-accent); border-radius: 10px; width: clamp(150px, 40vw, 200px); display: flex; flex-direction: column; align-items: center; box-shadow: inset 0 0 10px rgba(0,0,0,0.5); }
-        #shopScreen .upgrade-emoji { font-size: clamp(40px, 10vw, 56px); margin-bottom: 10px; line-height: 1; }
-        #shopScreen .upgrade-card h3 { margin-top:0; margin-bottom:5px; color:var(--color-accent); font-size: clamp(16px, 4vw, 18px); }
-        #shopScreen .upgrade-card p { font-size: clamp(14px, 3.5vw, 16px); margin: 2px 0; line-height: 1.2; }
-        #shopScreen .upgrade-card button { width: 100%; font-size: clamp(16px, 4vw, 20px); padding: 10px; margin-top: auto; }
+        #shopScreen .upgrade-card { background: rgba(255,255,255,0.1); padding: 15px; border: 2px solid var(--color-accent); border-radius: 10px; width: clamp(140px, 30vw, 180px); display: flex; flex-direction: column; align-items: center; box-shadow: inset 0 0 10px rgba(0,0,0,0.5); }
+        #shopScreen .upgrade-emoji { font-size: clamp(32px, 8vmin, 56px); margin-bottom: 10px; line-height: 1; }
+        #shopScreen .upgrade-card h3 { margin-top:0; margin-bottom:5px; color:var(--color-accent); font-size: clamp(14px, 3.5vmin, 18px); }
+        #shopScreen .upgrade-card p { font-size: clamp(12px, 3vmin, 16px); margin: 2px 0; line-height: 1.2; }
+        #shopScreen .upgrade-card button { width: 100%; font-size: clamp(14px, 3.5vmin, 20px); padding: 10px; margin-top: auto; }
         #shopScreen .upgrade-card button:disabled { background:#555; color:#999; cursor:not-allowed; box-shadow:0 5px 0 #333; }
-        #shopScreen .upgrade-card.purchased { animation: purchase-flash .4s ease-out; } @keyframes purchase-flash{ 0%{border-color:var(--color-success);box-shadow:0 0 15px var(--color-success)} 100%{border-color:var(--color-accent);box-shadow:inset 0 0 10px rgba(0,0,0,0.5)} }
-
-        /* Controles Mobile */
+        
         #mobile-controls {
-            position: absolute; bottom: 20px; left: 10px; right: 10px;
             z-index: 20;
-            display: none; /* Escondido por padrão */
+            display: none;
             justify-content: space-between;
             align-items: flex-end;
-            pointer-events: none;
+            padding: 2vmin;
         }
-        body.touch-controls #mobile-controls {
-            display: flex; /* Exibido via JS/CSS */
-        }
+        body.touch-controls #mobile-controls { display: flex; }
         .d-pad, .action-buttons { pointer-events: auto; display: flex; gap: 15px; }
-        .d-pad { position: relative; width: 150px; height: 150px; }
+        .d-pad { position: relative; width: 25vmin; height: 25vmin; max-width: 150px; max-height: 150px; }
         .d-pad-btn {
-            position: absolute; width: 50px; height: 50px;
+            position: absolute; width: 33.33%; height: 33.33%;
             background: rgba(0,0,0,0.5); border: 2px solid rgba(255,255,255,0.5);
             display: flex; justify-content: center; align-items: center;
-            font-size: 24px; color: white; border-radius: 15px;
+            font-size: 5vmin; color: white; border-radius: 15px;
             user-select: none; -webkit-user-select: none;
         }
         .d-pad-btn:active { background: rgba(255,255,255,0.4); }
-        .d-pad-btn.up { top: 0; left: 50px; }
-        .d-pad-btn.down { bottom: 0; left: 50px; }
-        .d-pad-btn.left { top: 50px; left: 0; }
-        .d-pad-btn.right { top: 50px; right: 0; }
+        .d-pad-btn.up { top: 0; left: 33.33%; }
+        .d-pad-btn.down { bottom: 0; left: 33.33%; }
+        .d-pad-btn.left { top: 33.33%; left: 0; }
+        .d-pad-btn.right { top: 33.33%; right: 0; }
         
         .action-button {
-            width: 90px; height: 90px;
+            width: 18vmin; height: 18vmin; max-width: 100px; max-height: 100px;
             background: rgba(231, 76, 60, 0.6); border: 2px solid rgba(255,255,255,0.5);
             border-radius: 50%;
             display: flex; justify-content: center; align-items: center;
-            font-size: 18px; text-align: center; padding: 5px; box-sizing: border-box; color: white;
+            font-size: 3vmin; text-align: center; padding: 5px; color: white;
             user-select: none; -webkit-user-select: none;
         }
         .action-button:active { background: rgba(231, 76, 60, 1); }
 
-        /* Detecção de dispositivo de toque */
-        @media (hover: none) and (pointer: coarse) {
-            body.auto-controls #mobile-controls {
-                display: flex;
-            }
-        }
+        @media (hover: none) and (pointer: coarse) { body.auto-controls #mobile-controls { display: flex; } }
 
         #hud-messages {
-            position: absolute; top: 90px; left: 50%; transform: translateX(-50%);
-            z-index: 6; font-size: clamp(16px, 4vw, 22px); color: var(--color-accent);
+            top: 15%; left: 50%; transform: translateX(-50%);
+            width: auto; height: auto;
+            z-index: 6; font-size: clamp(16px, 4vmin, 22px); color: var(--color-accent);
             text-shadow: 2px 2px #000;
             display: flex; flex-direction: column; align-items: center; gap: 10px;
-            pointer-events: none;
         }
         .hud-message { padding:5px 15px; background:var(--color-hud-bg); border-radius:5px; animation:fade-out 3s forwards; }
         @keyframes fade-out{ 0%{opacity:1;transform:translateY(0)} 80%{opacity:1;transform:translateY(0)} 100%{opacity:0;transform:translateY(-20px)} }
 
-        /* Loading Screen */
-        #loadingScreen h2 {
-            font-size: 24px; color: var(--color-accent); margin-top: 40px;
-            animation: pulse 1.5s infinite;
-        }
+        #loadingScreen h2 { font-size: 4vmin; color: var(--color-accent); margin-top: 40px; animation: pulse 1.5s infinite; }
         @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
-        #loadingScreen .credits {
-             color: #ccc; font-size: 28px;
-        }
+        #loadingScreen .credits { color: #ccc; font-size: 5vmin; }
     </style>
 </head>
-<body class="auto-controls"> <!-- Classe inicial para controle automático -->
+<body class="auto-controls">
     <div id="game-container">
         <canvas id="gameCanvas"></canvas>
-        
-        <!-- HUD -->
         <div class="hud">
             <div id="score">Pontos: 0</div><div id="level">Nível: 1</div><div id="salesGoal">Vendas: 0/10</div><div id="stock">Estoque: 10</div><div id="combo"></div><div id="timer">Tempo: 60</div>
         </div>
         <div id="hud-messages"></div>
-
-        <!-- Overlays -->
         <div id="loadingScreen" class="screen-overlay visible">
             <h1 class="credits">Criado por Gabriel Leandro</h1>
             <h2>Carregando...</h2>
         </div>
-
         <div id="startScreen" class="screen-overlay">
             <h1 id="logo-container"> <span id="logo-text"></span><span id="logo-cursor">_</span> </h1>
             <p>Venda paçocas, desvie dos fiscais e seja uma lenda do parque!</p>
@@ -213,7 +197,6 @@
                 <button id="instructionsButton" class="pixel-button" style="background: #3498db; box-shadow: 0 5px 0 #217dbb;">Como Jogar</button>
             </div>
         </div>
-        
         <div id="optionsScreen" class="screen-overlay">
             <h1>OPÇÕES</h1>
             <p>Escolha seu modo de controle preferido.</p>
@@ -224,14 +207,12 @@
             </div>
             <button id="backToMenuFromOptions" class="pixel-button" style="margin-top: 30px; background: #95a5a6; box-shadow: 0 5px 0 #5f6a6b;">Voltar</button>
         </div>
-
         <div id="gameOverScreen" class="screen-overlay">
             <h1>FISCALIZADO!</h1>
             <p>Os fiscais levaram suas paçocas...</p>
             <p id="finalScore">Sua pontuação final foi: 0</p>
             <button id="restartButton" class="pixel-button">Tentar Novamente</button>
         </div>
-
         <div id="shopScreen" class="screen-overlay">
             <h1>Lojinha do Zé</h1>
             <p>Nível concluído! Use seus pontos para comprar melhorias.</p>
@@ -245,42 +226,39 @@
             </div>
             <button id="continueButton" class="pixel-button">Próximo Dia</button>
         </div>
-        
         <div id="pauseScreen" class="screen-overlay">
             <h1>PAUSADO</h1>
             <p>Um bom vendedor também precisa de uma pausa para o café.</p>
             <button id="resumeButton" class="pixel-button">Continuar</button>
         </div>
-
         <div id="instructionsScreen" class="screen-overlay">
             <h1>COMO JOGAR</h1>
-            <ul style="list-style: none; padding: 0; text-align: left; max-width: 80%;">
+            <ul style="list-style: none; padding: 0; text-align: left; max-width: 90%; font-size: clamp(14px, 3.5vmin, 20px);">
                 <li><strong>PC:</strong> Use <strong>W,A,S,D</strong> ou <strong>Setas</strong> para mover.</li>
                 <li><strong>Celular:</strong> Use o <strong>D-Pad</strong> na tela.</li>
                 <li><strong>Vender:</strong> Pressione <strong>Espaço</strong> (PC) ou o <strong>botão VENDER</strong> (Celular).</li>
                 <li><strong>Recarregar:</strong> Volte para sua base na calçada.</li>
-                <li><strong>Objetivo:</strong> Cumpra a meta de vendas antes que o tempo acabe.</li>
+                <li><strong>Objetivo:</strong> Cumpra a meta de vendas.</li>
                 <li><strong>Cuidado:</strong> Evite os <strong>Fiscais</strong>!</li>
                 <li><strong>Pausa:</strong> Pressione <strong>P</strong> para pausar.</li>
             </ul>
             <button id="backToMenuButton" class="pixel-button">Voltar</button>
         </div>
-    </div>
-    
-    <div id="mobile-controls">
-        <div class="d-pad">
-            <div class="d-pad-btn up" data-key="w">▲</div>
-            <div class="d-pad-btn down" data-key="s">▼</div>
-            <div class="d-pad-btn left" data-key="a">◄</div>
-            <div class="d-pad-btn right" data-key="d">►</div>
+        <div id="mobile-controls">
+            <div class="d-pad">
+                <div class="d-pad-btn up" data-key="w">▲</div>
+                <div class="d-pad-btn down" data-key="s">▼</div>
+                <div class="d-pad-btn left" data-key="a">◄</div>
+                <div class="d-pad-btn right" data-key="d">►</div>
+            </div>
+            <div class="action-buttons">
+                <div class="action-button" data-key=" ">VENDER</div>
+            </div>
         </div>
-        <div class="action-buttons">
-            <div class="action-button" data-key=" ">VENDER</div>
-        </div>
     </div>
-
 <script>
 // --- SELETORES DO DOM ---
+const gameContainer = document.getElementById('game-container');
 const canvas = document.getElementById('gameCanvas'); const ctx = canvas.getContext('2d');
 const scoreEl = document.getElementById('score'), levelEl = document.getElementById('level'), salesGoalEl = document.getElementById('salesGoal'), stockEl = document.getElementById('stock'), timerEl = document.getElementById('timer'), comboEl = document.getElementById('combo');
 const loadingScreen = document.getElementById('loadingScreen'), startScreen = document.getElementById('startScreen'), optionsScreen = document.getElementById('optionsScreen'), gameOverScreen = document.getElementById('gameOverScreen'), shopScreen = document.getElementById('shopScreen'), pauseScreen = document.getElementById('pauseScreen'), instructionsScreen = document.getElementById('instructionsScreen');
@@ -296,6 +274,13 @@ const GAME_WIDTH = 1920, GAME_HEIGHT = 1080;
 canvas.width = GAME_WIDTH; canvas.height = GAME_HEIGHT;
 ctx.imageSmoothingEnabled = false;
 
+// --- FUNÇÃO DE REDIMENSIONAMENTO PARA RESPONSIVIDADE ---
+function resizeGame() {
+    const rect = canvas.getBoundingClientRect();
+    gameContainer.style.width = `${rect.width}px`;
+    gameContainer.style.height = `${rect.height}px`;
+}
+
 const CONFIG = {
     player: { initialSpeed: 400, interactionRange: TILE_SIZE * 1.5, refillSpeed: 2 },
     npc: { baseSpeed: 80, speedVariance: 50, max: 10 },
@@ -306,60 +291,37 @@ const CONFIG = {
     environment: { dirtPatchCount: 150 }
 };
 
-// --- ASSETS PROCEDURAIS E EMOJIS ---
 const colorPalette = { 'S': '#f2cdae', 'H': '#3d2b1f', 'H2': '#c99c6b', 'Y': '#ffd700', 'B': '#3498db', 'G': '#2ecc71', 'E': '#808080', 'W': '#ffffff', 'D': '#8b4513', 'R': '#e74c3c', 'K': '#000000', 'l': '#cccccc', 'C': '#d2b48c', 'P': '#964B00', 'T': '#ffeb3b', 'M': '#e91e63', 'N': '#4caf50', 'F': '#8d4925', 'O': '#ffa500', 'V': '#9400d3', 'GRASS': '#72a06a', 'DIRT_PATCH': '#614b35', 'SIDEWALK': '#a0a0a0' };
 const powerUpEmojis = { speed: '👟', range: '📢', invisibility: '📦' };
-
 const spriteData = { player0: { w: 8, h: 12, p: ["  HHHH  ", " HHHHHH ", " HSSSSH ", "  SKSK  ", "  S  S  ", "   SS   ", " YYYYYY ", "Y YYYY Y", "Y YYYY Y", "  YYYY  ", "  D  D  ", " DD  DD "] }, player1: { w: 8, h: 12, p: ["  HHHH  ", " HHHHHH ", " HSSSSH ", "  SKSK  ", "  S  S  ", "   SS   ", " YYYYYY ", "Y YYYY Y", "Y YYYY Y", "  YYYY  ", " D  D   ", "DD  DD  "] }, player2: { w: 8, h: 12, p: ["        ", "  HHHH  ", " HHHHHH ", " HSSSSH ", "  SKSK  ", "  S  S  ", " YYYYYY ", "Y YYYY Y", "Y YYYY Y", "  YYYY  ", "  D  D  ", " DD  DD "] }, npc10: { w: 8, h: 12, p: ["  KKKK  ", " KKKKKK ", " KSSSSK ", "  SKSK  ", "  S  S  ", "   SS   ", " BBBBBB ", "B BBBBB", "B BBBBB", "  BBBB  ", "  K  K  ", " KK  KK "] }, npc11: { w: 8, h: 12, p: ["  KKKK  ", " KKKKKK ", " KSSSSK ", "  SKSK  ", "  S  S  ", "   SS   ", " BBBBBB ", "B BBBBB", "B BBBBB", "  BBBB  ", " K  K   ", "KK  KK  "] }, npc12: { w: 8, h: 12, p: ["        ", "  KKKK  ", " KKKKKK ", " KSSSSK ", "  SKSK  ", "  S  S  ", " BBBBBB ", "B BBBBB", "B BBBBB", "  BBBB  ", "  K  K  ", " KK  KK "] }, npc20: { w: 8, h: 12, p: ["  WWWW  ", " WWWWWW ", " WSSSSW ", "  SKSK  ", "  S  S  ", "   SS   ", " GGGGGG ", "G GGGG G", "G GGGG G", "  GGGG  ", "  D  D  ", " DD  DD "] }, npc21: { w: 8, h: 12, p: ["  WWWW  ", " WWWWWW ", " WSSSSW ", "  SKSK  ", "  S  S  ", "   SS   ", " GGGGGG ", "G GGGG G", "G GGGG G", "  GGGG  ", " D  D   ", "DD  DD  "] }, npc22: { w: 8, h: 12, p: ["        ", "  WWWW  ", " WWWWWW ", " WSSSSW ", "  SKSK  ", "  S  S  ", "   SS   ", " GGGGGG ", "G GGGG G", "G GGGG G", "  GGGG  ", "  D  D  ", " DD  DD "] }, npc30: { w: 8, h: 12, p: ["  BBBB  ", " BSSSNB ", " BSSSSB ", "  SKSK  ", "  S  S  ", "   SS   ", " NNNNNN ", "N NNNN N", "N NNNN N", "  NNNN  ", "  D  D  ", " DD  DD "] }, npc31: { w: 8, h: 12, p: ["  BBBB  ", " BSSSNB ", " BSSSSB ", "  SKSK  ", "  S  S  ", "   SS   ", " NNNNNN ", "N NNNN N", "N NNNN N", "  NNNN  ", " D  D   ", "DD  DD  "] }, npc32: { w: 8, h: 12, p: ["        ", "  BBBB  ", " BSSSNB ", " BSSSSB ", "  SKSK  ", "  S  S  ", " NNNNNN ", "N NNNN N", "N NNNN N", "  NNNN  ", "  D  D  ", " DD  DD "] }, npc40: { w: 8, h: 12, p: [" H2H2H2 ", "H2SSSSSH", "H2SSSSSH", "  SKSK  ", "  S  S  ", "   SS   ", " MMMMMM ", " M MMMM ", "  MMMM  ", "  MMMM  ", "  W  W  ", " WW  WW "] }, npc41: { w: 8, h: 12, p: [" H2H2H2 ", "H2SSSSSH", "H2SSSSSH", "  SKSK  ", "  S  S  ", "   SS   ", " MMMMMM ", " M MMMM ", "  MMMM  ", "  MMMM  ", " W  W   ", "WW  WW  "] }, npc42: { w: 8, h: 12, p: ["        ", " H2H2H2 ", "H2SSSSSH", "H2SSSSSH", "  SKSK  ", "  S  S  ", " MMMMMM ", " M MMMM ", "  MMMM  ", "  MMMM  ", "  W  W  ", " WW  WW "] }, fiscal0: { w: 8, h: 12, p: ["  KKKK  ", " KKKKKK ", " KSSSSK ", "  SKSK  ", "  S  S  ", "   SS   ", " EEEEEE ", "E EEEE E", "E EEEE E", "  EEEE  ", "  K  K  ", " KK  KK "] }, fiscal1: { w: 8, h: 12, p: ["  KKKK  ", " KKKKKK ", " KSSSSK ", "  SKSK  ", "  S  S  ", "   SS   ", " EEEEEE ", "E EEEE E", "E EEEE E", "  EEEE  ", " K  K   ", "KK  KK  "] }, fiscal2: { w: 8, h: 12, p: ["        ", "  KKKK  ", " KKKKKK ", " KSSSSK ", "  SKSK  ", "  S  S  ", " EEEEEE ", "E EEEE E", "E EEEE E", "  EEEE  ", "  K  K  ", " KK  KK "] }, rival0: { w: 8, h: 12, p: ["  KKKK  ", " KVVVVV ", " KVSSSK ", "  SKSK  ", "  S  S  ", "   SS   ", " RRRRRR ", "R RRRR R", "R RRRR R", "  RRRR  ", "  D  D  ", " DD  DD "] }, rival1: { w: 8, h: 12, p: ["  KKKK  ", " KVVVVV ", " KVSSSK ", "  SKSK  ", "  S  S  ", "   SS   ", " RRRRRR ", "R RRRR R", "R RRRR R", "  RRRR  ", " D  D   ", "DD  DD  "] }, rival2: { w: 8, h: 12, p: ["        ", "  KKKK  ", " KVVVVV ", " KVSSSK ", "  SKSK  ", "  S  S  ", " RRRRRR ", "R RRRR R", "R RRRR R", "  RRRR  ", "  D  D  ", " DD  DD "] }, alertIcon: { w: 5, h: 7, p: ["  R  ", " RRR ", " RRR ", "  R  ", "     ", "  R  ", "  R  "] }, base: { w: 16, h: 10, p: ["RRRRRRRRRRRRRRRR", "WWWWWWWWWWWWWWWW", "  DDDDDDDDDDDD  ", " D CCCCCCCCCC D ", " D C         CC D ", " D C  PAÇOCA  D ", " D CCCCCCCCCC D ", " D DDDDDDDDDD D ", "   DDDDDDDDDD   ", "   DDDD  DDDD   "] } };
 
-// --- OTIMIZAÇÃO: CACHE DE SPRITES ---
 const spriteCache = {};
 function preloadSprites() {
     return new Promise((resolve) => {
-        let loaded = 0;
         const total = Object.keys(spriteData).length;
-        if (total === 0) {
-            resolve();
-            return;
-        }
+        if (total === 0) return resolve();
+        let loaded = 0;
         for (const key in spriteData) {
             const s = spriteData[key];
             const spriteCanvas = document.createElement('canvas');
-            spriteCanvas.width = s.w * 8; // Aumentar resolução para melhor qualidade
-            spriteCanvas.height = s.h * 8;
+            spriteCanvas.width = s.w * 8; spriteCanvas.height = s.h * 8;
             const spriteCtx = spriteCanvas.getContext('2d');
             spriteCtx.imageSmoothingEnabled = false;
-            
-            const pW = spriteCanvas.width / s.w;
-            const pH = spriteCanvas.height / s.h;
-            for (let r = 0; r < s.h; r++) {
-                for (let c = 0; c < s.w; c++) {
-                    const char = s.p[r][c];
-                    if (char !== ' ') {
-                        spriteCtx.fillStyle = colorPalette[char];
-                        spriteCtx.fillRect(c * pW, r * pH, pW, pH);
-                    }
-                }
+            const pW = spriteCanvas.width / s.w, pH = spriteCanvas.height / s.h;
+            for (let r = 0; r < s.h; r++) for (let c = 0; c < s.w; c++) {
+                const char = s.p[r][c];
+                if (char !== ' ') { spriteCtx.fillStyle = colorPalette[char]; spriteCtx.fillRect(c * pW, r * pH, pW, pH); }
             }
             spriteCache[key] = spriteCanvas;
-            loaded++;
-            if (loaded === total) {
-                resolve();
-            }
+            if (++loaded === total) resolve();
         }
     });
 }
-function drawSprite(ctx, sKey, x, y, w, h) {
-    if (spriteCache[sKey]) {
-        ctx.drawImage(spriteCache[sKey], x, y, w, h);
-    }
-}
+function drawSprite(ctx, sKey, x, y, w, h) { if (spriteCache[sKey]) ctx.drawImage(spriteCache[sKey], x, y, w, h); }
 
-// --- ESTADO DO JOGO ---
 let gameState = {};
 const initialGameState = { isRunning: false, isGameOver: false, isShopOpen: false, isPaused: false, level: 1, score: 0, timer: CONFIG.level.timeBase, player: null, npcs: [], fiscais: [], particles: [], speechBubbles: [], powerups: [], rival: null, dirtPatches: [], keysPressed: {}, lastTime: 0, timerInterval: null, playerStats: { speed: CONFIG.player.initialSpeed, pacocaCapacity: 10, pacocaCount: 10, hasDisguise: false, marketingBonus: 0, timeBonus: 0, comboTimeBonus: 0, powerup: { type: null, timer: 0 } }, upgradeCosts: { speed: 100, capacity: 100, disguise: 300, marketing: 200, time: 250, combo: 150 }, base: { x: GAME_WIDTH / 2 - 128, y: 0, width: 256, height: TILE_SIZE, refillProgress: 0 }, combo: { count: 0, timer: 0, maxTime: 2 }, levelSales: 0, targetSales: CONFIG.level.salesTargetBase };
 
-// --- ÁUDIO, EFEITOS E FEEDBACK ---
 const AudioManager = {
     ctx: null, musicNode: null, musicInterval: null, isMuted: false, currentTrack: null,
     async init() { try { if (!this.ctx) { this.ctx = new(window.AudioContext || window.webkitAudioContext)(); } if (this.ctx.state === 'suspended') { await this.ctx.resume(); } } catch (e) { console.error("Audio Context não pode ser iniciado.", e); } },
@@ -368,34 +330,21 @@ const AudioManager = {
         if (!this.ctx || this.isMuted || track === this.currentTrack) return;
         this.stopMusic();
         this.currentTrack = track;
-        
         let notes, interval, type, volume;
         switch (track) {
-            case 'menu':
-                notes = [261.63, 329.63, 392.00]; // C4, E4, G4
-                interval = 500; type = 'sine'; volume = 0.06; break;
-            case 'gameplay':
-                notes = [261.63, 329.63, 392.00, 523.25]; // C, E, G, C5
-                interval = 300; type = 'triangle'; volume = 0.08; break;
-            case 'chase':
-                notes = [130.81, 138.59, 130.81, 146.83]; // C3, C#3, C3, D3
-                interval = 150; type = 'sawtooth'; volume = 0.1; break;
+            case 'menu': notes = [261.63, 329.63, 392.00]; interval = 500; type = 'sine'; volume = 0.06; break;
+            case 'gameplay': notes = [261.63, 329.63, 392.00, 523.25]; interval = 300; type = 'triangle'; volume = 0.08; break;
+            case 'chase': notes = [130.81, 138.59, 130.81, 146.83]; interval = 150; type = 'sawtooth'; volume = 0.1; break;
             default: return;
         }
-
-        this.musicNode = this.ctx.createGain();
-        this.musicNode.gain.value = volume;
-        this.musicNode.connect(this.ctx.destination);
+        this.musicNode = this.ctx.createGain(); this.musicNode.gain.value = volume; this.musicNode.connect(this.ctx.destination);
         let noteIndex = 0;
         this.musicInterval = setInterval(() => {
             if (!this.musicNode || !this.ctx || this.ctx.state !== 'running') return;
             const o = this.ctx.createOscillator(), g = this.ctx.createGain();
-            o.connect(g); g.connect(this.musicNode);
-            o.type = type; o.frequency.value = notes[noteIndex % notes.length];
-            g.gain.setValueAtTime(0.5, this.ctx.currentTime);
-            g.gain.exponentialRampToValueAtTime(1e-5, this.ctx.currentTime + (interval / 1000) * 0.9);
-            o.start(this.ctx.currentTime);
-            o.stop(this.ctx.currentTime + interval / 1000);
+            o.connect(g); g.connect(this.musicNode); o.type = type; o.frequency.value = notes[noteIndex % notes.length];
+            g.gain.setValueAtTime(0.5, this.ctx.currentTime); g.gain.exponentialRampToValueAtTime(1e-5, this.ctx.currentTime + (interval / 1000) * 0.9);
+            o.start(this.ctx.currentTime); o.stop(this.ctx.currentTime + interval / 1000);
             noteIndex++;
         }, interval);
     },
@@ -403,68 +352,41 @@ const AudioManager = {
 };
 class Particle { constructor(x, y, text = '', color = 'white', life = 1, vx = 0, vy = 0, size = 18) { Object.assign(this, { x, y, text, color, life, initialLife: life, size }); this.vx = vx !== 0 ? vx : (Math.random() - .5) * 3; this.vy = vy !== 0 ? vy : (Math.random() * -3) - 1 } update(dt) { this.x += this.vx; this.y += this.vy; this.life -= dt } draw(ctx) { ctx.save(); ctx.globalAlpha = Math.max(0, this.life / this.initialLife); ctx.fillStyle = this.color; if (this.text) { ctx.font = `${this.size}px PixelFont`; ctx.fillText(this.text, this.x, this.y) } else { ctx.fillRect(this.x, this.y, this.size, this.size) } ctx.restore() } }
 function spawnParticles(count, x, y, text, color, life, size) { for (let i = 0; i < count; i++) gameState.particles.push(new Particle(x, y, text, color, life, 0, 0, size)) }
-const PHRASES = { npc_sale: ["Opa, paçoca!", "Toma aqui o dinheiro.", "Valeu!", "Adoro!"], npc_annoyed: ["Me deixa em paz!", "Sai pra lá!", "Vai me assaltar?", "Tenho nada não..."], fiscal_alert: ["Parado aí, moleque!", "Documentação!", "Segura ele!", "É hoje!"], fiscal_chase: ["Você não escapa!", "Fiscalização!", "Pega, pega!"], rival_taunt: ["Mais rápido!", "Freguês é meu!", "Come poeira!"] };
+const PHRASES = { npc_sale: ["Opa, paçoca!", "Toma aqui o dinheiro.", "Valeu!", "Adoro!"], fiscal_alert: ["Parado aí!", "Documentação!", "Segura ele!"], fiscal_chase: ["Você não escapa!", "Fiscalização!", "Pega, pega!"], rival_taunt: ["Mais rápido!", "Freguês é meu!", "Come poeira!"] };
 class SpeechBubble { constructor(target, text) { this.target = target; this.text = text; this.life = 2; this.target.hasBubble = true } update(dt) { this.life -= dt; if (this.life <= 0) this.target.hasBubble = false } draw(ctx) { if (this.life <= 0) return; ctx.save(); ctx.globalAlpha = Math.min(1, this.life * 2); const x = this.target.x + this.target.width / 2; const y = this.target.y - 15; ctx.font = `18px PixelFont`; const textWidth = ctx.measureText(this.text).width; ctx.fillStyle = "white"; ctx.fillRect(x - textWidth / 2 - 5, y - 20, textWidth + 10, 25); ctx.fillStyle = "black"; ctx.fillText(this.text, x - textWidth / 2, y); ctx.fillStyle = "white"; ctx.beginPath(); ctx.moveTo(x, y + 10); ctx.lineTo(x - 5, y + 5); ctx.lineTo(x + 5, y + 5); ctx.fill(); ctx.restore() } }
 function spawnBubble(target, phraseType) { if (target.hasBubble) return; const phrases = PHRASES[phraseType]; const text = phrases[Math.floor(Math.random() * phrases.length)]; gameState.speechBubbles.push(new SpeechBubble(target, text)) }
 function showHudMessage(text) { const msgEl = document.createElement('div'); msgEl.className = 'hud-message'; msgEl.textContent = text; hudMessagesEl.appendChild(msgEl); setTimeout(() => msgEl.remove(), 3000); }
 
-// --- CLASSES DE ENTIDADES ---
 class Entity { constructor(x, y, w, h, baseKey) { Object.assign(this, { x, y, width: w, height: h, baseSpriteKey: baseKey }); this.isMoving = false; this.animationTimer = 0; this.currentFrame = 0; this.animationSpeed = .25; this.idleTimer = Math.random() * 2; this.hasBubble = false } draw(ctx) { const frame = this.isMoving ? this.currentFrame : (this.idleTimer % 2 > .5) ? 2 : 0; const spriteKey = this.baseSpriteKey + frame; drawSprite(ctx, spriteKey, this.x, this.y, this.width, this.height) } updateAnimation(dt) { this.isMoving = true; this.animationTimer += dt; if (this.animationTimer > this.animationSpeed) { this.currentFrame = 1 - this.currentFrame; this.animationTimer = 0; } this.idleTimer += dt } }
 class Player extends Entity {
     constructor(x, y) { super(x, y, TILE_SIZE * .75, TILE_SIZE * 1.125, 'player'); this.isRefilling = false; }
     update(dt, keys) {
-        if (gameState.playerStats.powerup.timer > 0) {
-            gameState.playerStats.powerup.timer -= dt;
-            if (gameState.playerStats.powerup.timer <= 0) {
-                gameState.playerStats.powerup.type = null;
-                showHudMessage("Power-up acabou!");
-            }
-        }
-        let currentSpeed = gameState.playerStats.speed;
-        this.interactionRange = CONFIG.player.interactionRange;
-        const powerupType = gameState.playerStats.powerup.type;
+        if (gameState.playerStats.powerup.timer > 0) { gameState.playerStats.powerup.timer -= dt; if (gameState.playerStats.powerup.timer <= 0) { gameState.playerStats.powerup.type = null; showHudMessage("Power-up acabou!"); } }
+        let currentSpeed = gameState.playerStats.speed; this.interactionRange = CONFIG.player.interactionRange; const powerupType = gameState.playerStats.powerup.type;
         if (powerupType === 'speed') currentSpeed *= 1.5;
         if (powerupType === 'range') this.interactionRange *= 1.5;
-
         let dx = 0, dy = 0;
-        if (keys['w'] || keys['ArrowUp']) dy -= 1;
-        if (keys['s'] || keys['ArrowDown']) dy += 1;
-        if (keys['a'] || keys['ArrowLeft']) dx -= 1;
-        if (keys['d'] || keys['ArrowRight']) dx += 1;
+        if (keys['w'] || keys['ArrowUp']) dy -= 1; if (keys['s'] || keys['ArrowDown']) dy += 1;
+        if (keys['a'] || keys['ArrowLeft']) dx -= 1; if (keys['d'] || keys['ArrowRight']) dx += 1;
         this.isMoving = (dx !== 0 || dy !== 0);
         if (this.isMoving) { const mag = Math.sqrt(dx * dx + dy * dy); this.x += (dx / mag) * currentSpeed * dt; this.y += (dy / mag) * currentSpeed * dt; if (Math.random() < .2) spawnParticles(1, this.x + this.width / 2, this.y + this.height, '', 'rgba(255,255,255,0.2)', .5, 0, 0, 4); }
-        this.x = Math.max(0, Math.min(GAME_WIDTH - this.width, this.x));
-        this.y = Math.max(TILE_SIZE, Math.min(GAME_HEIGHT - this.height - TILE_SIZE, this.y));
-        this.updateAnimation(dt);
-        this.checkRefill();
+        this.x = Math.max(0, Math.min(GAME_WIDTH - this.width, this.x)); this.y = Math.max(TILE_SIZE, Math.min(GAME_HEIGHT - this.height - TILE_SIZE, this.y));
+        this.updateAnimation(dt); this.checkRefill();
     }
     sell() { if (gameState.playerStats.pacocaCount <= 0 || this.isRefilling) return; for (let i = gameState.npcs.length - 1; i >= 0; i--) { const npc = gameState.npcs[i]; if (npc.isTargeted) continue; if (Math.hypot(this.x - npc.x, this.y - npc.y) < this.interactionRange) { gameState.combo.count++; gameState.combo.timer = gameState.combo.maxTime + gameState.playerStats.comboTimeBonus; const saleValue = 10 + gameState.playerStats.marketingBonus; const comboBonus = gameState.combo.count * 2; const totalPoints = saleValue + comboBonus; gameState.score += totalPoints; spawnParticles(1, npc.x, npc.y - 20, `+${totalPoints}`, '#FFD700', 1, 0, 0, 24); spawnBubble(npc, 'npc_sale'); gameState.playerStats.pacocaCount--; gameState.levelSales++; AudioManager.playSound('sale'); gameState.npcs.splice(i, 1); updateHUD(); return; } } }
-    checkRefill() { const { playerStats, base } = gameState; if (this.y <= TILE_SIZE && this.x > base.x && this.x < base.x + base.width) { if (playerStats.pacocaCount < playerStats.pacocaCapacity) { this.isRefilling = true; base.refillProgress += CONFIG.player.refillSpeed * (1000 / 60 / 1000); if (base.refillProgress >= 1) { playerStats.pacocaCount = playerStats.pacocaCapacity; base.refillProgress = 0; AudioManager.playSound('refill'); updateHUD(); } } } else { this.isRefilling = false; base.refillProgress = 0; } }
-    draw(ctx) {
-        ctx.save();
-        ctx.globalAlpha = 0.15;
-        ctx.fillStyle = gameState.playerStats.powerup.type === 'range' ? '#3498db' : '#FFD700';
-        ctx.beginPath();
-        ctx.arc(this.x + this.width / 2, this.y + this.height / 2, this.interactionRange, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-        ctx.save();
-        if (gameState.playerStats.powerup.type === 'invisibility') ctx.globalAlpha = 0.5;
-        super.draw(ctx);
-        ctx.restore();
-    }
+    checkRefill() { const { playerStats, base } = gameState; if (this.y <= TILE_SIZE && this.x > base.x && this.x < base.x + base.width) { if (playerStats.pacocaCount < playerStats.pacocaCapacity) { this.isRefilling = true; base.refillProgress += CONFIG.player.refillSpeed * (1 / 60); if (base.refillProgress >= 1) { playerStats.pacocaCount = playerStats.pacocaCapacity; base.refillProgress = 0; AudioManager.playSound('refill'); updateHUD(); } } } else { this.isRefilling = false; base.refillProgress = 0; } }
+    draw(ctx) { ctx.save(); ctx.globalAlpha = 0.15; ctx.fillStyle = gameState.playerStats.powerup.type === 'range' ? '#3498db' : '#FFD700'; ctx.beginPath(); ctx.arc(this.x + this.width / 2, this.y + this.height / 2, this.interactionRange, 0, Math.PI * 2); ctx.fill(); ctx.restore(); ctx.save(); if (gameState.playerStats.powerup.type === 'invisibility') ctx.globalAlpha = 0.5; super.draw(ctx); ctx.restore(); }
 }
 class NPC extends Entity { constructor(x, y, isMenu = false) { const type = Math.floor(Math.random() * 4) + 1; super(x, y, TILE_SIZE * .75, TILE_SIZE * 1.125, `npc${type}`); this.speed = isMenu ? (Math.random() > .5 ? 1 : -1) * (CONFIG.npc.baseSpeed / 2 + Math.random() * 40) : CONFIG.npc.baseSpeed + Math.random() * CONFIG.npc.speedVariance; this.isMenu = isMenu; this.isTargeted = false; if (!isMenu) this.setNewTarget() } setNewTarget() { this.targetX = Math.random() * (GAME_WIDTH - this.width); this.targetY = TILE_SIZE + Math.random() * (GAME_HEIGHT - this.height - TILE_SIZE * 2) } update(dt) { if (this.isMenu) { this.x += this.speed * dt; } else { const dx = this.targetX - this.x, dy = this.targetY - this.y; const dist = Math.hypot(dx, dy); if (dist > 10) { this.x += (dx / dist) * this.speed * dt; this.y += (dy / dist) * this.speed * dt; } else { this.setNewTarget() } } this.updateAnimation(dt) } }
 class Fiscal extends Entity {
-    constructor(x, y, level) { super(x, y, TILE_SIZE * .75, TILE_SIZE * 1.125, 'fiscal'); this.speed = CONFIG.fiscal.baseSpeed + (level * CONFIG.fiscal.speedPerLevel); this.chaseSpeed = this.speed + CONFIG.fiscal.chaseSpeedBonus + (level * CONFIG.fiscal.chaseSpeedPerLevel); this.state = 'wandering'; this.detectionRange = CONFIG.fiscal.detectionRange; this.alertTimer = 0; this.chaseThreshold = 5 - (level > 5 ? 2 : 0); if (gameState.playerStats.hasDisguise) this.chaseThreshold *= 1.5; this.setNewTarget() }
+    constructor(x, y, level) { super(x, y, TILE_SIZE * .75, TILE_SIZE * 1.125, 'fiscal'); this.speed = CONFIG.fiscal.baseSpeed + (level * CONFIG.fiscal.speedPerLevel); this.chaseSpeed = this.speed + CONFIG.fiscal.chaseSpeedBonus + (level * CONFIG.fiscal.chaseSpeedPerLevel); this.state = 'wandering'; this.detectionRange = CONFIG.fiscal.detectionRange; this.alertTimer = 0; if (gameState.playerStats.hasDisguise) this.detectionRange *= 0.7; this.setNewTarget() }
     setNewTarget() { this.targetX = Math.random() * (GAME_WIDTH - this.width); this.targetY = TILE_SIZE + Math.random() * (GAME_HEIGHT - this.height - TILE_SIZE * 2) }
     update(dt, player) {
-        if (!player) { this.isMoving = false; this.updateAnimation(dt); return }
+        if (!player) { this.isMoving = false; return }
         if (gameState.playerStats.powerup.type === 'invisibility') { this.state = 'wandering'; }
-        const distToPlayer = Math.hypot(this.x - player.x, this.y - player.y);
-        const isPlayerSafe = player.y <= TILE_SIZE;
+        const distToPlayer = Math.hypot(this.x - player.x, this.y - player.y); const isPlayerSafe = player.y <= TILE_SIZE;
         if (this.state !== 'chasing' && distToPlayer < this.detectionRange && !isPlayerSafe && gameState.playerStats.powerup.type !== 'invisibility') { if (this.state !== 'alerted') spawnBubble(this, 'fiscal_alert'); this.state = 'alerted' }
-        if (this.state === 'alerted') { this.alertTimer += dt; if (this.alertTimer > 1) { if (this.state !== 'chasing') spawnBubble(this, 'fiscal_chase'); this.state = 'chasing'; AudioManager.playSound('alert') } } else this.alertTimer = 0;
+        if (this.state === 'alerted') { this.alertTimer += dt; if (this.alertTimer > (gameState.playerStats.hasDisguise ? 1.5 : 1)) { if (this.state !== 'chasing') spawnBubble(this, 'fiscal_chase'); this.state = 'chasing'; AudioManager.playSound('alert') } } else this.alertTimer = 0;
         let currentSpeed = this.speed, target = { x: this.targetX, y: this.targetY };
         if (this.state === 'chasing') { currentSpeed = this.chaseSpeed; target = player; if (isPlayerSafe) { this.state = 'wandering'; this.alertTimer = -2 } }
         const dx = target.x - this.x, dy = target.y - this.y; const dist = Math.hypot(dx, dy);
@@ -476,16 +398,11 @@ class Fiscal extends Entity {
 class Rival extends Entity {
     constructor(x, y) { super(x, y, TILE_SIZE * .75, TILE_SIZE * 1.125, 'rival'); this.speed = CONFIG.rival.speed; this.state = 'seeking'; this.targetNpc = null; this.saleTimer = 0; }
     findTarget() { let closestNpc = null; let minDistance = Infinity; gameState.npcs.forEach(npc => { if (!npc.isTargeted) { const distance = Math.hypot(this.x - npc.x, this.y - npc.y); if (distance < minDistance) { minDistance = distance; closestNpc = npc; } } }); if (closestNpc) { this.targetNpc = closestNpc; this.targetNpc.isTargeted = true; this.state = 'chasing'; } }
-    update(dt) { if (this.state === 'seeking') { this.findTarget(); if (!this.targetNpc) { this.x += this.speed * dt * 0.5; if (this.x > GAME_WIDTH) this.x = -this.width; } } else if (this.state === 'chasing' && this.targetNpc) { const dx = this.targetNpc.x - this.x, dy = this.targetNpc.y - this.y; const dist = Math.hypot(dx, dy); if (dist > 10) { this.x += (dx / dist) * this.speed * dt; this.y += (dy / dist) * this.speed * dt; } else { this.state = 'selling'; this.saleTimer = CONFIG.rival.saleTime; } if (Math.random() < 0.01) spawnBubble(this, 'rival_taunt'); } else if (this.state === 'selling') { this.saleTimer -= dt; if (this.saleTimer <= 0) { const npcIndex = gameState.npcs.indexOf(this.targetNpc); if (npcIndex > -1) { spawnParticles(5, this.targetNpc.x, this.targetNpc.y, 'VENDIDO!', colorPalette.R, 1, 18); AudioManager.playSound('rival_sale'); gameState.npcs.splice(npcIndex, 1); } this.targetNpc = null; this.state = 'seeking'; } } this.updateAnimation(dt); }
+    update(dt) { if (this.state === 'seeking') { this.findTarget(); if (!this.targetNpc) { this.x += this.speed * dt * 0.5; if (this.x > GAME_WIDTH) this.x = -this.width; } } else if (this.state === 'chasing' && this.targetNpc) { const dx = this.targetNpc.x - this.x, dy = this.targetNpc.y - this.y; const dist = Math.hypot(dx, dy); if (dist > 10) { this.x += (dx / dist) * this.speed * dt; this.y += (dy / dist) * this.speed * dt; } else { this.state = 'selling'; this.saleTimer = CONFIG.rival.saleTime; } if (Math.random() < 0.01) spawnBubble(this, 'rival_taunt'); } else if (this.state === 'selling') { this.saleTimer -= dt; if (this.saleTimer <= 0) { const npcIndex = gameState.npcs.indexOf(this.targetNpc); if (npcIndex > -1) { spawnParticles(5, this.targetNpc.x, this.targetNpc.y, 'VENDIDO!', colorPalette.R, 1, 0, 0, 18); AudioManager.playSound('rival_sale'); gameState.npcs.splice(npcIndex, 1); } this.targetNpc = null; this.state = 'seeking'; } } this.updateAnimation(dt); }
     draw(ctx) { super.draw(ctx); if (this.state === 'selling') { ctx.fillStyle = 'white'; ctx.font = `18px PixelFont`; ctx.fillText('VENDENDO!', this.x, this.y - 10); } }
 }
-class PowerUp {
-    constructor(x, y, type) { Object.assign(this, { x, y, type, width: TILE_SIZE, height: TILE_SIZE, bob: 0 }); }
-    update(dt) { this.bob += dt * 3; this.y_offset = Math.sin(this.bob) * 5; }
-    draw(ctx) { ctx.save(); ctx.font = '48px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(powerUpEmojis[this.type], this.x + this.width / 2, this.y + this.y_offset + this.height / 2); ctx.restore(); }
-}
+class PowerUp { constructor(x, y, type) { Object.assign(this, { x, y, type, width: TILE_SIZE, height: TILE_SIZE, bob: 0 }); } update(dt) { this.bob += dt * 3; this.y_offset = Math.sin(this.bob) * 5; } draw(ctx) { ctx.save(); ctx.font = '48px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(powerUpEmojis[this.type], this.x + this.width / 2, this.y + this.y_offset + this.height / 2); ctx.restore(); } }
 
-// --- RENDERIZAÇÃO E GAME LOOP ---
 function drawEnvironment() {
     ctx.fillStyle = colorPalette.GRASS; ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
     ctx.globalAlpha = 0.4;
@@ -516,15 +433,8 @@ function update(dt) {
     for (let i = gameState.powerups.length - 1; i >= 0; i--) { if (checkCollision(gameState.player, gameState.powerups[i])) { const p = gameState.powerups[i]; gameState.playerStats.powerup.type = p.type; gameState.playerStats.powerup.timer = CONFIG.powerup.duration; AudioManager.playSound('powerup'); showHudMessage(`${powerUpEmojis[p.type]} ATIVADO!`); gameState.powerups.splice(i, 1); break; } }
     for (let i = gameState.particles.length - 1; i >= 0; i--) { const p = gameState.particles[i]; p.update(dt); if (p.life <= 0) gameState.particles.splice(i, 1) }
     for (let i = gameState.speechBubbles.length - 1; i >= 0; i--) { const b = gameState.speechBubbles[i]; b.update(dt); if (b.life <= 0) gameState.speechBubbles.splice(i, 1) }
-    
-    // Lógica da música de perseguição
     const isChasing = gameState.fiscais.some(f => f.state === 'chasing');
-    if (isChasing) {
-        AudioManager.playMusic('chase');
-    } else {
-        AudioManager.playMusic('gameplay');
-    }
-    
+    AudioManager.playMusic(isChasing ? 'chase' : 'gameplay');
     if (gameState.levelSales >= gameState.targetSales) { levelComplete() }
 }
 function draw() {
@@ -542,7 +452,6 @@ function draw() {
 }
 function gameLoop(timestamp) { if (!gameState.lastTime) gameState.lastTime = timestamp; const deltaTime = (timestamp - gameState.lastTime) / 1000; gameState.lastTime = timestamp; update(deltaTime); draw(); requestAnimationFrame(gameLoop); }
 
-// --- GERENCIAMENTO DE TELA E ESTADO ---
 function showScreen(screenId) { document.querySelectorAll('.screen-overlay').forEach(s => s.classList.remove('visible')); if (screenId) document.getElementById(screenId).classList.add('visible'); }
 function updateHUD() { scoreEl.textContent = `Pontos: ${gameState.score}`; levelEl.textContent = `Nível: ${gameState.level}`; timerEl.textContent = `Tempo: ${Math.ceil(gameState.timer)}`; salesGoalEl.textContent = `Vendas: ${gameState.levelSales}/${gameState.targetSales}`; stockEl.textContent = `Estoque: ${gameState.playerStats.pacocaCount}`; if (gameState.combo.count > 1) { comboEl.textContent = `COMBO x${gameState.combo.count}!`; comboEl.classList.add('active'); setTimeout(() => comboEl.classList.remove('active'), 100) } else { comboEl.textContent = '' } }
 function resetLevel() {
@@ -550,13 +459,11 @@ function resetLevel() {
     if (!gameState.player) { gameState.player = new Player(GAME_WIDTH / 2, GAME_HEIGHT / 2); } else { gameState.player.x = GAME_WIDTH / 2; gameState.player.y = GAME_HEIGHT / 2; }
     gameState.npcs = []; gameState.fiscais = []; gameState.particles = []; gameState.speechBubbles = []; gameState.powerups = [];
     gameState.playerStats.pacocaCount = gameState.playerStats.pacocaCapacity;
-    gameState.combo.count = 0;
-    gameState.levelSales = 0;
+    gameState.combo.count = 0; gameState.levelSales = 0;
     gameState.targetSales = CONFIG.level.salesTargetBase + (gameState.level - 1) * CONFIG.level.salesTargetPerLevel;
     if (gameState.level >= CONFIG.rival.spawnLevel && !gameState.rival) { gameState.rival = new Rival(-TILE_SIZE * 2, TILE_SIZE + Math.random() * (GAME_HEIGHT - TILE_SIZE * 3)); }
     if (gameState.rival) { gameState.rival.state = 'seeking'; gameState.rival.targetNpc = null; }
-    gameState.dirtPatches = [];
-    for(let i = 0; i < CONFIG.environment.dirtPatchCount; i++) { gameState.dirtPatches.push({ x: Math.random() * GAME_WIDTH, y: TILE_SIZE + Math.random() * (GAME_HEIGHT - 2 * TILE_SIZE), radius: Math.random() * 8 + 4, color: colorPalette.DIRT_PATCH }); }
+    gameState.dirtPatches = []; for(let i = 0; i < CONFIG.environment.dirtPatchCount; i++) { gameState.dirtPatches.push({ x: Math.random() * GAME_WIDTH, y: TILE_SIZE + Math.random() * (GAME_HEIGHT - 2 * TILE_SIZE), radius: Math.random() * 8 + 4, color: colorPalette.DIRT_PATCH }); }
 }
 async function startGame() {
     await AudioManager.init();
@@ -569,7 +476,7 @@ async function startGame() {
     updateHUD(); 
     AudioManager.playMusic('gameplay'); 
 }
-function gameOver(reason) { if (gameState.isGameOver) return; AudioManager.playSound('caught'); AudioManager.stopMusic(); spawnParticles(30, gameState.player.x, gameState.player.y, '', colorPalette.P, 2, 8); gameState.isRunning = false; gameState.isGameOver = true; finalScoreEl.textContent = `Sua pontuação final foi: ${gameState.score}`; showScreen('gameOverScreen'); clearInterval(gameState.timerInterval) }
+function gameOver(reason) { if (gameState.isGameOver) return; AudioManager.playSound('caught'); AudioManager.stopMusic(); spawnParticles(30, gameState.player.x, gameState.player.y, '', colorPalette.P, 2, 0, 0, 8); gameState.isRunning = false; gameState.isGameOver = true; finalScoreEl.textContent = `Sua pontuação final foi: ${gameState.score}`; showScreen('gameOverScreen'); clearInterval(gameState.timerInterval) }
 function levelComplete() { if (gameState.isShopOpen) return; AudioManager.stopMusic(); gameState.isRunning = false; gameState.isShopOpen = true; showScreen('shopScreen'); updateShop() }
 function continueToNextLevel() { gameState.level++; resetLevel(); gameState.isRunning = true; gameState.isShopOpen = false; showScreen(null); updateHUD(); AudioManager.playMusic('gameplay') }
 function togglePause() { gameState.isPaused = !gameState.isPaused; if (gameState.isPaused) { AudioManager.playSound('pause'); AudioManager.stopMusic(); showScreen('pauseScreen'); } else { AudioManager.playSound('pause'); showScreen(null); if (gameState.isRunning && !gameState.isShopOpen && !gameState.isGameOver) AudioManager.playMusic('gameplay'); } }
@@ -581,24 +488,19 @@ function updateShop() {
     document.querySelectorAll('.upgrade-card').forEach(c => c.classList.remove('purchased'));
 }
 
-// --- LÓGICA DO MENU ---
 let logoTypingInterval;
 function typeLogo() { const fullLogo = "PAÇOCA"; let currentText = ""; let i = 0; logoTextEl.innerHTML = ""; clearInterval(logoTypingInterval); logoTypingInterval = setInterval(() => { if (i < fullLogo.length) { currentText += fullLogo[i]; logoTextEl.textContent = currentText; i++ } else { clearInterval(logoTypingInterval) } }, 150) }
 async function initMenu() {
     AudioManager.stopMusic();
     gameState = { ...JSON.parse(JSON.stringify(initialGameState)) };
-    resetLevel(); 
-    gameState.npcs = [];
+    resetLevel(); gameState.npcs = [];
     for (let i = 0; i < 15; i++) { spawnEntities(true) }
-    showScreen('startScreen');
-    typeLogo();
-    await AudioManager.init();
-    AudioManager.playMusic('menu');
+    showScreen('startScreen'); typeLogo();
+    await AudioManager.init(); AudioManager.playMusic('menu');
 }
 function updateMenu(dt) { gameState.npcs.forEach(n => { n.update(dt); if (n.x < -n.width || n.x > GAME_WIDTH) { n.x = n.speed > 0 ? -n.width : GAME_WIDTH; } }); }
 function drawMenu() { drawEnvironment(); gameState.npcs.forEach(n => n.draw(ctx)); drawPostProcessing(); }
 
-// --- EVENT LISTENERS ---
 function initEventListeners() {
     startButton.addEventListener('click', startGame);
     restartButton.addEventListener('click', initMenu);
@@ -610,8 +512,7 @@ function initEventListeners() {
     backToMenuFromOptions.addEventListener('click', () => showScreen('startScreen'));
 
     window.addEventListener('keydown', e => {
-        const key = e.key.toLowerCase();
-        gameState.keysPressed[key] = true;
+        const key = e.key.toLowerCase(); gameState.keysPressed[key] = true;
         if (key === ' ' && gameState.isRunning && !gameState.isShopOpen && !gameState.isPaused) { e.preventDefault(); gameState.player.sell() }
         if (key === 'p' && gameState.isRunning && !gameState.isGameOver && !gameState.isShopOpen) { togglePause(); }
     });
@@ -627,7 +528,7 @@ function initEventListeners() {
         btn.addEventListener('click', () => {
             const controlType = btn.dataset.control;
             document.body.className = `${controlType}-controls`;
-            showHudMessage(`Controle definido para: ${controlType.charAt(0).toUpperCase() + controlType.slice(1)}`);
+            showHudMessage(`Controle: ${controlType.charAt(0).toUpperCase() + controlType.slice(1)}`);
             showScreen('startScreen');
         });
     });
@@ -646,23 +547,25 @@ function initEventListeners() {
         if (gameState.score >= cost && !gameState.playerStats.hasDisguise) { AudioManager.playSound('upgrade'); gameState.score -= cost; gameState.playerStats.hasDisguise = true; buyDisguiseBtn.parentElement.classList.add('purchased'); showHudMessage("Disfarce comprado!"); updateHUD(); updateShop(); }
     });
 
+    window.addEventListener('resize', resizeGame);
+    window.addEventListener('orientationchange', resizeGame);
+
     document.addEventListener('visibilitychange', () => { if (document.hidden) { AudioManager.isMuted = true; AudioManager.stopMusic(); } else { AudioManager.isMuted = false; if (gameState.isRunning && !gameState.isPaused && !gameState.isShopOpen && !gameState.isGameOver) { AudioManager.playMusic(gameState.fiscais.some(f => f.state === 'chasing') ? 'chase' : 'gameplay'); } else if (!gameState.isRunning) { AudioManager.playMusic('menu'); } } });
 }
 
-// --- INICIALIZAÇÃO ---
 async function initializeGame() {
     initEventListeners();
     await preloadSprites();
-    setTimeout(() => { // Pequeno delay para exibir a tela de loading
+    resizeGame(); 
+    setTimeout(() => {
         initMenu();
         if (!gameState.lastTime) {
-            gameLoop(0); // Inicia o game loop
+            gameLoop(0);
         }
     }, 1500);
 }
 
 initializeGame();
-
 </script>
 </body>
 </html>
