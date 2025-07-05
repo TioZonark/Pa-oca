@@ -3,15 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Paçoca: A Jornada do Docinho (V7.0 - Mobile Ready)</title>
+    <title>Paçoca: A Jornada do Docinho (V7.1 - Opções de Controle)</title>
     
     <!-- 
-        PROJETO: Paçoca: A Jornada do Docinho (V7.0 - Mobile Ready)
+        PROJETO: Paçoca: A Jornada do Docinho (V7.1 - Opções de Controle)
         MELHORIAS IMPLEMENTADAS:
-        - COMPATIBILIDADE MOBILE TOTAL: Adicionado suporte completo para dispositivos de toque.
-        - JOYSTICK ANALÓGICO: Substituído o D-Pad por um joystick analógico virtual (estilo Free Fire/PUBG) para movimento fluido em 360 graus.
-        - DESIGN RESPONSIVO: Os controles de toque e a área do jogo se adaptam a diferentes tamanhos e resoluções de tela, evitando bugs de zoom.
-        - LÓGICA DE CONTROLE UNIFICADA: O jogo agora aceita comandos do teclado e do joystick simultaneamente, sem conflitos.
+        - MENU DE OPÇÕES DE CONTROLE: Adicionado um menu para o usuário escolher ativamente entre Teclado/Mouse ou Joystick, garantindo que os controles mobile sempre apareçam quando selecionados.
+        - TELA FIXA EM MOBILE: Impedido o gesto de "pinça para zoom" e o arrastar da página em dispositivos de toque, proporcionando uma experiência de tela cheia mais estável.
+        - Lógica de visibilidade dos controles aprimorada via JavaScript.
     -->
 
     <style>
@@ -20,7 +19,10 @@
             src: url(data:font/woff2;base64,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) format('woff2');
         }
         :root{--color-bg:#333;--color-hud-bg:rgba(0,0,0,0.5);--color-text:#FFF;--color-accent:#FFD700;--color-danger:#e74c3c;--color-success:#2ecc71;--color-base:#8b4513}
-        body,html{margin:0;padding:0;display:flex;flex-direction:column;justify-content:center;align-items:center;height:100vh;overflow:hidden;background-color:var(--color-bg);color:var(--color-text);font-family:'PixelFont', sans-serif;image-rendering:pixelated}
+        
+        /* NOVO: Propriedade para fixar a tela no celular e evitar zoom */
+        body,html{margin:0;padding:0;display:flex;flex-direction:column;justify-content:center;align-items:center;height:100vh;overflow:hidden;background-color:var(--color-bg);color:var(--color-text);font-family:'PixelFont', sans-serif;image-rendering:pixelated; touch-action: none;}
+        
         #game-container{position:relative;width:100%;max-width:1920px;display:flex;justify-content:center;align-items:center}
         canvas#gameCanvas{border:5px solid #4a2d1f;box-shadow:0 0 20px rgba(0,0,0,0.5);width:100%;height:auto;max-width:100vw;max-height:calc(100vh - 20px);aspect-ratio:16 / 9;object-fit:contain}
         .hud{position:absolute;top:20px;left:20px;right:20px;display:flex;justify-content:space-between;align-items:center;font-size:20px;text-shadow:2px 2px 2px #000;pointer-events:none;text-transform:uppercase;z-index:5}
@@ -40,7 +42,7 @@
         #gameOverScreen button:active{box-shadow:0 3px 0 #8b2c21}
         #startScreen #logo-container{font-size:96px;margin-bottom:30px;color:var(--color-accent);text-shadow:6px 6px 0 #000}
         #startScreen #logo-cursor{animation:blink .8s step-end infinite} @keyframes blink{from,to{opacity:1}50%{opacity:0}}
-        #startScreen .start-buttons{display:flex;flex-direction:column;gap:15px}
+        .start-buttons{display:flex;flex-direction:column;gap:15px}
         #shopScreen .upgrades-container{display:flex;flex-wrap:wrap;justify-content:center;gap:20px;margin-top:20px}
         #shopScreen .upgrade-card{background:linear-gradient(145deg,rgba(255,255,255,0.1),rgba(0,0,0,0.2));padding:15px;border:2px solid var(--color-accent);border-radius:10px;width:200px;display:flex;flex-direction:column;align-items:center;box-shadow:inset 0 0 10px rgba(0,0,0,0.5);opacity:0;transform:translateY(40px);transition:opacity .3s ease-out,transform .3s ease-out,box-shadow .2s ease-out,border-color .2s ease-out}
         #shopScreen.visible .upgrade-card{opacity:1;transform:translateY(0)}
@@ -52,11 +54,28 @@
         #shopScreen .upgrade-card button{width:100%;font-size:20px;padding:10px;margin-top:auto}
         #shopScreen .upgrade-card button:disabled{background:#555;color:#999;cursor:not-allowed;box-shadow:0 5px 0 #333}
         #continueButton{margin-top:40px}
-        #instructionsScreen ul { list-style: none; padding: 0; }
-        #instructionsScreen li { margin-bottom: 15px; }
+        #instructionsScreen ul, #optionsScreen ul { list-style: none; padding: 0; }
+        #instructionsScreen li, #optionsScreen li { margin-bottom: 15px; }
+        #optionsScreen .options-buttons { display: flex; flex-direction: column; gap: 15px; margin-bottom: 30px; }
+
 
         /* --- CONTROLES MOBILE --- */
-        #mobile-controls{position:absolute;bottom:5vh;left:5vw;right:5vw;z-index:20;display:none;justify-content:space-between;align-items:flex-end;pointer-events:none}
+        #mobile-controls{
+            position:absolute;
+            bottom:5vh;
+            left:5vw;
+            right:5vw;
+            z-index:20;
+            /* MODIFICADO: A visibilidade agora é controlada por uma classe via JS */
+            display:none; 
+            justify-content:space-between;
+            align-items:flex-end;
+            pointer-events:none;
+        }
+        /* NOVO: Classe para tornar os controles visíveis quando a opção é selecionada */
+        #mobile-controls.visible {
+            display: flex;
+        }
         
         #joystick-container {pointer-events: auto;}
         #joystick-base {
@@ -94,8 +113,9 @@
             transform: scale(0.95);
         }
 
-        /* Exibe os controles apenas em dispositivos de toque */
-        @media(hover:none) and (pointer:coarse){ #mobile-controls{display:flex} }
+        /* REMOVIDO: A regra de media query foi substituída pela seleção manual de controle para maior confiabilidade.
+        @media(hover:none) and (pointer:coarse){ #mobile-controls{display:flex} } 
+        */
         /* --- FIM DOS CONTROLES MOBILE --- */
 
         #hud-messages{position:absolute;top:90px;left:50%;transform:translateX(-50%);z-index:6;font-size:22px;color:var(--color-accent);text-shadow:2px 2px #000;display:flex;flex-direction:column;align-items:center;gap:10px;pointer-events:none}
@@ -117,6 +137,8 @@
             <div class="start-buttons">
                 <button id="startButton" class="pixel-button">Começar a Vender!</button>
                 <button id="instructionsButton" class="pixel-button" style="background: #3498db; box-shadow: 0 5px 0 #217dbb;">Como Jogar</button>
+                <!-- NOVO: Botão de Opções -->
+                <button id="optionsButton" class="pixel-button" style="background: #8e44ad; box-shadow: 0 5px 0 #70318c;">Opções</button>
             </div>
         </div>
         <div id="gameOverScreen" class="screen-overlay">
@@ -155,6 +177,16 @@
             </ul>
             <button id="backToMenuButton" class="pixel-button">Voltar</button>
         </div>
+        <!-- NOVO: Tela de Opções -->
+        <div id="optionsScreen" class="screen-overlay">
+            <h1>OPÇÕES DE CONTROLE</h1>
+            <p>Escolha como você quer jogar.</p>
+            <div class="options-buttons">
+                <button id="selectKeyboardBtn" class="pixel-button" style="background: #2980b9; box-shadow: 0 5px 0 #1f618d;">Teclado e Mouse</button>
+                <button id="selectTouchBtn" class="pixel-button" style="background: #27ae60; box-shadow: 0 5px 0 #1e8449;">Joystick (Celular)</button>
+            </div>
+            <button id="backFromOptionsButton" class="pixel-button">Voltar</button>
+        </div>
     </div>
     
     <div id="mobile-controls">
@@ -179,6 +211,13 @@ const logoTextEl = document.getElementById('logo-text'), hudMessagesEl = documen
 const speedEmojiEl = document.getElementById('speedEmoji'), capacityEmojiEl = document.getElementById('capacityEmoji'), marketingEmojiEl = document.getElementById('marketingEmoji'), timeEmojiEl = document.getElementById('timeEmoji'), comboEmojiEl = document.getElementById('comboEmoji'), disguiseEmojiEl = document.getElementById('disguiseEmoji');
 const joystickStick = document.getElementById('joystick-stick');
 const joystickContainer = document.getElementById('joystick-container');
+// NOVO: Seletores para a tela de opções
+const optionsScreen = document.getElementById('optionsScreen');
+const optionsButton = document.getElementById('optionsButton');
+const selectKeyboardBtn = document.getElementById('selectKeyboardBtn');
+const selectTouchBtn = document.getElementById('selectTouchBtn');
+const backFromOptionsButton = document.getElementById('backFromOptionsButton');
+const mobileControls = document.getElementById('mobile-controls');
 
 
 // --- CONFIGURAÇÕES GLOBAIS E BALANCEAMENTO ---
@@ -196,6 +235,9 @@ const CONFIG = {
     powerup: { spawnChance: 0.001, duration: 8 },
     environment: { dirtPatchCount: 150 }
 };
+
+// NOVO: Variável para controlar o tipo de controle selecionado
+let controlScheme = 'keyboard'; // 'keyboard' ou 'touch'
 
 // --- CONTROLE JOYSTICK ---
 const joystick = {
@@ -257,11 +299,11 @@ class Player extends Entity {
 
         let dx = 0, dy = 0;
         
-        // --- NOVA LÓGICA DE CONTROLE (JOYSTICK + TECLADO) ---
-        if (joystick.active) {
+        // --- LÓGICA DE CONTROLE UNIFICADA ---
+        if (controlScheme === 'touch' && joystick.active) {
             dx = joystick.x;
             dy = joystick.y;
-        } else { // Fallback para teclado
+        } else { // Fallback para teclado (ou se joystick não estiver ativo)
             if (keys['w'] || keys['ArrowUp']) dy -= 1;
             if (keys['s'] || keys['ArrowDown']) dy += 1;
             if (keys['a'] || keys['ArrowLeft']) dx -= 1;
@@ -271,7 +313,6 @@ class Player extends Entity {
         this.isMoving = (dx !== 0 || dy !== 0);
         if (this.isMoving) { 
             const mag = Math.hypot(dx, dy); 
-            // Normaliza o vetor para ter velocidade consistente em todas as direções
             this.x += (dx / mag) * currentSpeed * dt; 
             this.y += (dy / mag) * currentSpeed * dt; 
             if (Math.random() < .2) spawnParticles(1, this.x + this.width / 2, this.y + this.height, '', 'rgba(255,255,255,0.2)', .5, 0, 0, 4); 
@@ -439,6 +480,16 @@ function initMenu() {
 function updateMenu(dt) { gameState.npcs.forEach(n => { n.update(dt); if (n.x < -n.width || n.x > GAME_WIDTH) { n.x = n.speed > 0 ? -n.width : GAME_WIDTH; } }); }
 function drawMenu() { drawEnvironment(); gameState.npcs.forEach(n => n.draw(ctx)); drawPostProcessing(); }
 
+// NOVO: Função para definir o esquema de controle e atualizar a UI
+function setControlScheme(scheme) {
+    controlScheme = scheme;
+    if (scheme === 'touch') {
+        mobileControls.classList.add('visible');
+    } else {
+        mobileControls.classList.remove('visible');
+    }
+}
+
 // --- EVENT LISTENERS ---
 function initEventListeners() {
     startButton.addEventListener('click', startGame);
@@ -447,6 +498,20 @@ function initEventListeners() {
     resumeButton.addEventListener('click', togglePause);
     instructionsButton.addEventListener('click', () => showScreen('instructionsScreen'));
     backToMenuButton.addEventListener('click', () => showScreen('startScreen'));
+
+    // NOVO: Listeners para o menu de opções
+    optionsButton.addEventListener('click', () => showScreen('optionsScreen'));
+    backFromOptionsButton.addEventListener('click', () => showScreen('startScreen'));
+    selectKeyboardBtn.addEventListener('click', () => {
+        setControlScheme('keyboard');
+        showHudMessage("Controle: Teclado e Mouse");
+        showScreen('startScreen');
+    });
+    selectTouchBtn.addEventListener('click', () => {
+        setControlScheme('touch');
+        showHudMessage("Controle: Joystick Ativado");
+        showScreen('startScreen');
+    });
 
     window.addEventListener('keydown', e => {
         const key = e.key.toLowerCase();
@@ -459,17 +524,20 @@ function initEventListeners() {
     // --- LÓGICA DO JOYSTICK E BOTÃO DE AÇÃO ---
     document.querySelector('.action-button').addEventListener('touchstart', e => {
         e.preventDefault();
-        if (gameState.player) gameState.player.sell();
+        if (gameState.player && gameState.isRunning) gameState.player.sell();
     }, { passive: false });
 
     function handleJoystickStart(e) {
         e.preventDefault();
+        // Só ativa o joystick se o controle de toque estiver selecionado
+        if (controlScheme !== 'touch') return;
+        
         joystick.active = true;
         const touch = e.changedTouches[0];
         joystick.touchId = touch.identifier;
         const baseRect = joystickContainer.getBoundingClientRect();
         joystick.radius = baseRect.width / 2;
-        joystick.maxRadius = joystick.radius * 0.7; // Stick pode se mover até 70% do raio da base
+        joystick.maxRadius = joystick.radius * 0.7;
         joystick.startX = baseRect.left + joystick.radius;
         joystick.startY = baseRect.top + joystick.radius;
     }
@@ -496,10 +564,8 @@ function initEventListeners() {
             dy = (dy / distance) * joystick.maxRadius;
         }
 
-        // Atualiza a posição visual do stick
         joystickStick.style.transform = `translate(${dx}px, ${dy}px)`;
 
-        // Atualiza o estado lógico para o movimento do jogador (vetor normalizado)
         if (distance > 0) {
             joystick.x = dx / joystick.maxRadius;
             joystick.y = dy / joystick.maxRadius;
